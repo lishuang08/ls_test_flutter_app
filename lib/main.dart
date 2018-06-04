@@ -1,5 +1,10 @@
+import 'dart:collection';
+
+import 'dart:convert';
+import 'data.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:ls_test_flutter_app/list.dart';
 
 void main() => runApp(new MyApp());
 
@@ -44,7 +49,18 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  List<Specice> widgets = [];
   int _counter = 0;
+
+  var aaa = new HashMap();
+  var bbb = [1, 2, 3, 4];
+  var ccc = {0: "0", 1: "1", 2: '2'};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
 
   void _incrementCounter() {
     setState(() {
@@ -54,8 +70,10 @@ class _MyHomePageState extends State<MyHomePage> {
       // _counter without calling setState(), then the build method would not be
       // called again, and so nothing would appear to happen.
       _counter++;
+
       sayHello(_counter);
       show();
+      dowohat();
     });
   }
 
@@ -64,62 +82,50 @@ class _MyHomePageState extends State<MyHomePage> {
 
   show() => debugPrint('${a ~/ b}'); //取整，0
 
-  sayHello(name) => debugPrint('Hello $name!');
+  sayHello(name) {
+    var a;
+    var b = false;
+    var c = b ? "a" : "b";
+    var input = new Runes(
+        '\u2665  \u{1f605}  \u{1f60e}  \u{1f47b}  \u{1f596}  \u{1f44d}');
+    debugPrint('Hello $name!' + new String.fromCharCodes(input));
+    debugPrint(c);
+    debugPrint(a ?? "null ");
+    debugPrint(a == c ? "b==c" : "b!=c");
+  }
+
+  dowohat() {
+    var s = 'string interpolation';
+
+    assert('Dart has $s, which is very handy.' ==
+        'Dart has string interpolation, ' + 'which is very handy.');
+    assert('That deserves all caps. ' + '${s.toUpperCase()} is very handy!' ==
+        'That deserves all caps. ' + 'STRING INTERPOLATION is very handy!');
+  }
+
+  showLoadingDialog() {
+    return widgets.length == 0;
+  }
+
+  getProgressDialog() {
+    return new Center(child: new CircularProgressIndicator());
+  }
+
+  getBody() {
+    if (showLoadingDialog()) {
+      return getProgressDialog();
+    } else {
+      return _getList();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return new Scaffold(
       appBar: new AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
         title: new Text(widget.title),
       ),
-      body: new Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-
-        child: new Column(
-          // Column is also layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug paint" (press "p" in the console where you ran
-          // "flutter run", or select "Toggle Debug Paint" from the Flutter tool
-          // window in IntelliJ) to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            new Text(
-              'You have pushed the button this many times:',
-            ),
-            new Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.display1,
-            ),
-            new MaterialButton(
-              onPressed: () {
-                loadData();
-
-              },
-              child: new Text('Hello'),
-              padding: new EdgeInsets.only(left: 10.0, right: 10.0),
-            ),
-          ],
-
-        ),
-
-      ),
+      body: getBody(),
 
       floatingActionButton: new FloatingActionButton(
         onPressed: _incrementCounter,
@@ -128,10 +134,37 @@ class _MyHomePageState extends State<MyHomePage> {
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
-}
 
-loadData() async {
-  String dataURL = "https://dog.ceo/api/breeds/list/all";
-  http.Response response = await http.get(dataURL);
-  debugPrint(response.body.toString());
+  Widget getRow(int i) {
+    return new Padding(
+        padding: new EdgeInsets.all(10.0),
+        child: new Text("Row ${widgets[i].key}  ${widgets[i].nameKey}"));
+  }
+
+  _getList() {
+    return new ListView.builder(
+        itemCount: widgets.length,
+        itemBuilder: (BuildContext context, int position) {
+          return getRow(position);
+        });
+  }
+
+  _loadData() async {
+    String dataURL = "http://api.gbif.org/v1/species";
+    http.Response response = await http.get(dataURL);
+    setState(() {
+      Map json = jsonDecode(response.body.toString());
+
+
+      var sp = new SpeciceBack.fromJson(json);
+
+      widgets = sp.results;
+
+
+      widgets.forEach((key) {
+        debugPrint("widgets    ${key.toString()} ");
+      });
+
+    });
+  }
 }
